@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const { verifyToken } = require("./middleware/auth");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,6 +26,11 @@ app.get("/", (req, res) => {
 // Health check route
 app.get("/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
+});
+
+// Returns the logged-in user from the JWT (used to test authentication)
+app.get("/api/me", verifyToken, (req, res) => {
+  res.json({ user: req.user });
 });
 
 // 404 handler for unknown routes
