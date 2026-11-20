@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { verifyToken } = require("./middleware/auth");
+const tuitionRoutes = require("./routes/tuitions");
+const statsRoutes = require("./routes/stats");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -27,6 +29,10 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
+
+// Public routes
+app.use("/api/tuitions", tuitionRoutes);
+app.use("/api/stats", statsRoutes);
 
 // Returns the logged-in user from the JWT (used to test authentication)
 app.get("/api/me", verifyToken, (req, res) => {
