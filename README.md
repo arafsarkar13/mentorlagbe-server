@@ -28,3 +28,10 @@ This creates the admin, 4 tutors and 2 students (through BetterAuth), 12 approve
 - `GET /api/tuitions/filters`
 - `GET /api/tuitions/:id`
 - `GET /api/stats`
+
+## Student and upload API (JWT required)
+- `POST /api/applications` - student applies (no duplicates)
+- `GET /api/applications/my` - student's applications
+- `GET /api/applications/check/:tuitionId` - has the student already applied?
+- `DELETE /api/applications/:id` - cancel a pending application
+- `POST /api/upload` - upload an image to ImgBB (key stays on the server)
