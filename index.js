@@ -13,7 +13,7 @@ const port = process.env.PORT || 5000;
 // Allow only our frontend(s). CLIENT_URL can hold several URLs separated by commas.
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:3000")
   .split(",")
-  .map((url) => url.trim());
+  .map((url) => url.trim().replace(/\/+$/, "")); // remove any trailing slash
 
 app.use(
   cors({
