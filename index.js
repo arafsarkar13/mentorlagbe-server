@@ -6,6 +6,8 @@ const tuitionRoutes = require("./routes/tuitions");
 const statsRoutes = require("./routes/stats");
 const applicationRoutes = require("./routes/applications");
 const uploadRoutes = require("./routes/upload");
+const tutorRoutes = require("./routes/tutor");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -39,6 +41,8 @@ app.use("/api/stats", statsRoutes);
 // Protected routes (JWT is checked inside each route file)
 app.use("/api/applications", applicationRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/tutor", tutorRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Returns the logged-in user from the JWT (used to test authentication)
 app.get("/api/me", verifyToken, (req, res) => {
