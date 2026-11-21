@@ -8,6 +8,7 @@ const applicationRoutes = require("./routes/applications");
 const uploadRoutes = require("./routes/upload");
 const tutorRoutes = require("./routes/tutor");
 const adminRoutes = require("./routes/admin");
+const payments = require("./routes/payments");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -23,6 +24,9 @@ app.use(
     credentials: true,
   })
 );
+// Stripe webhook needs the raw body, so it comes BEFORE express.json()
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), payments.webhook);
+
 app.use(express.json({ limit: "4mb" }));
 
 app.get("/", (req, res) => {
@@ -43,6 +47,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/tutor", tutorRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/payments", payments.router);
 
 // Returns the logged-in user from the JWT (used to test authentication)
 app.get("/api/me", verifyToken, (req, res) => {
