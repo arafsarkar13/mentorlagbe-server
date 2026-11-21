@@ -1,11 +1,13 @@
 // Run with:  npm run seed
 // Creates demo users (through BetterAuth, so passwords are hashed correctly),
 // then adds connected tuitions and applications.
-// Safe to run again: it replaces only the data it created before (seeded: true).
+// Safe to run again: existing demo tuitions and applications are kept.
+// To rebuild them from scratch run:  npm run seed -- --reset
 
 require("dotenv").config();
 const { MongoClient } = require("mongodb");
 
+const RESET = process.argv.includes("--reset");
 const AUTH_URL = (process.env.SEED_AUTH_URL || "").replace(/\/$/, "");
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "mentorlagbe@gmail.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "mentor12345";
@@ -19,7 +21,7 @@ const users = [
   { name: "Tanvir Ahmed", email: "tanvir.tutor@mentorlagbe.com", password: TUTOR_PASSWORD, role: "tutor", bio: "Software engineer teaching programming and accounting basics to beginners." },
   { name: "Nusrat Jahan", email: "nusrat.tutor@mentorlagbe.com", password: TUTOR_PASSWORD, role: "tutor", bio: "IELTS 8.0 scorer and English literature graduate with 5 years of teaching." },
   { name: "Arif Hossain", email: "student@mentorlagbe.com", password: STUDENT_PASSWORD, role: "student", bio: "HSC candidate looking for strong Math and Physics support." },
-  { name: "Mim Akter", email: "student2@mentorlagbe.com", password: STUDENT_PASSWORD, role: "student", bio: "Class 9 student who wants to improve in English and Biology." },
+  { name: "Mim Akter", email: "student2@mentorlagbe.com", password: STUDENT_PASSWORD, role: "student", plan: "pro", bio: "Class 9 student who wants to improve in English and Biology." },
 ];
 
 // [title, subject, classLevel, mode, location, fee, days/week, tutor email, status, description]
@@ -95,61 +97,76 @@ async function main() {
     );
   }
 
-  // 2. Tuitions (replace only the ones created by this script)
+  // 2 + 3. Tuitions and applications (only created when missing, or rebuilt with --reset)
   const tuitionsCol = db.collection("tuitions");
-  await tuitionsCol.deleteMany({ seeded: true });
-
-  const tutorNames = {};
-  users.filter((u) => u.role === "tutor").forEach((u) => (tutorNames[u.email] = u.name));
-
-  const now = Date.now();
-  const tuitionDocs = tuitionRows.map((row, index) => {
-    const [title, subject, classLevel, mode, location, monthlyFee, daysPerWeek, tutorEmail, approvalStatus, description] = row;
-    return {
-      title, subject, classLevel, mode, location, monthlyFee, daysPerWeek,
-      bannerImage: bannerFor(subject),
-      description,
-      tutorName: tutorNames[tutorEmail],
-      tutorEmail,
-      approvalStatus,
-      isActive: true,
-      createdAt: new Date(now - index * 24 * 60 * 60 * 1000), // one day apart
-      seeded: true,
-    };
-  });
-  const inserted = await tuitionsCol.insertMany(tuitionDocs);
-  console.log(`Inserted ${tuitionDocs.length} tuitions`);
-
-  // 3. Applications linked to those tuitions
   const applicationsCol = db.collection("applications");
-  await applicationsCol.deleteMany({ seeded: true });
+  const alreadySeeded = (await tuitionsCol.countDocuments({ seeded: true })) > 0;
 
-  const tuitionIdByTitle = {};
-  tuitionDocs.forEach((t, i) => (tuitionIdByTitle[t.title] = inserted.insertedIds[i]));
-  const studentByEmail = {};
-  users.filter((u) => u.role === "student").forEach((u) => (studentByEmail[u.email] = u));
+  if (alreadySeeded && !RESET) {
+    console.log("Demo tuitions already exist - skipped (use --reset to rebuild them)");
+  } else {
+    await tuitionsCol.deleteMany({ seeded: true });
+    await applicationsCol.deleteMany({ seeded: true });
 
-  const applicationDocs = applicationRows.map((row, index) => {
-    const [studentEmail, title, status, preferredSchedule, studentNote] = row;
-    const tuition = tuitionDocs.find((t) => t.title === title);
-    return {
-      tuitionId: tuitionIdByTitle[title],
-      tuitionTitle: tuition.title,
-      subject: tuition.subject,
-      monthlyFee: tuition.monthlyFee,
-      tutorEmail: tuition.tutorEmail,
-      studentName: studentByEmail[studentEmail].name,
-      studentEmail,
-      studentPhone: `01712-00000${index}`,
-      preferredSchedule,
-      studentNote,
-      status,
-      appliedAt: new Date(now - index * 12 * 60 * 60 * 1000),
-      seeded: true,
-    };
-  });
-  await applicationsCol.insertMany(applicationDocs);
-  console.log(`Inserted ${applicationDocs.length} applications`);
+    const tutorNames = {};
+    users.filter((u) => u.role === "tutor").forEach((u) => (tutorNames[u.email] = u.name));
+
+    const now = Date.now();
+    const tuitionDocs = tuitionRows.map((row, index) => {
+      const [title, subject, classLevel, mode, location, monthlyFee, daysPerWeek, tutorEmail, approvalStatus, description] = row;
+      return {
+        title, subject, classLevel, mode, location, monthlyFee, daysPerWeek,
+        bannerImage: bannerFor(subject),
+        description,
+        tutorName: tutorNames[tutorEmail],
+        tutorEmail,
+        approvalStatus,
+        isActive: true,
+        createdAt: new Date(now - index * 24 * 60 * 60 * 1000), // one day apart
+        seeded: true,
+      };
+    });
+    const inserted = await tuitionsCol.insertMany(tuitionDocs);
+    console.log(`Inserted ${tuitionDocs.length} tuitions`);
+
+    const tuitionIdByTitle = {};
+    tuitionDocs.forEach((t, i) => (tuitionIdByTitle[t.title] = inserted.insertedIds[i]));
+    const studentByEmail = {};
+    users.filter((u) => u.role === "student").forEach((u) => (studentByEmail[u.email] = u));
+
+    const applicationDocs = applicationRows.map((row, index) => {
+      const [studentEmail, title, status, preferredSchedule, studentNote] = row;
+      const tuition = tuitionDocs.find((t) => t.title === title);
+      return {
+        tuitionId: tuitionIdByTitle[title],
+        tuitionTitle: tuition.title,
+        subject: tuition.subject,
+        monthlyFee: tuition.monthlyFee,
+        tutorEmail: tuition.tutorEmail,
+        tutorName: tuition.tutorName,
+        studentName: studentByEmail[studentEmail].name,
+        studentEmail,
+        studentPhone: `01712-00000${index}`,
+        preferredSchedule,
+        studentNote,
+        status,
+        appliedAt: new Date(now - index * 12 * 60 * 60 * 1000),
+        seeded: true,
+      };
+    });
+    await applicationsCol.insertMany(applicationDocs);
+    console.log(`Inserted ${applicationDocs.length} applications`);
+  }
+
+  // 4. Sample payments for the two Pro demo users (real ones come from Stripe)
+  const paymentsCol = db.collection("payments");
+  await paymentsCol.deleteMany({ seeded: true });
+  const day = 24 * 60 * 60 * 1000;
+  await paymentsCol.insertMany([
+    { userEmail: "tutor@mentorlagbe.com", userName: "Rahim Uddin", userRole: "tutor", planName: "Pro Tutor Plan", amount: 15, currency: "usd", transactionId: "pi_demo_0001", stripeSessionId: "cs_test_demo_0001", paymentStatus: "paid", paidAt: new Date(Date.now() - 6 * day), seeded: true },
+    { userEmail: "student2@mentorlagbe.com", userName: "Mim Akter", userRole: "student", planName: "Pro Student Plan", amount: 10, currency: "usd", transactionId: "pi_demo_0002", stripeSessionId: "cs_test_demo_0002", paymentStatus: "paid", paidAt: new Date(Date.now() - 2 * day), seeded: true },
+  ]);
+  console.log("Inserted 2 sample payments");
 
   await client.close();
   console.log("Seeding finished");
