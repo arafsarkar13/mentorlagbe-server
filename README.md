@@ -35,3 +35,16 @@ This creates the admin, 4 tutors and 2 students (through BetterAuth), 12 approve
 - `GET /api/applications/check/:tuitionId` - has the student already applied?
 - `DELETE /api/applications/:id` - cancel a pending application
 - `POST /api/upload` - upload an image to ImgBB (key stays on the server)
+
+## Tutor API (JWT + tutor role)
+- `GET /api/tutor/stats`
+- `POST /api/tutor/tuitions` - post a tuition (free plan: max 2)
+- `GET /api/tutor/tuitions`, `GET|PUT|DELETE /api/tutor/tuitions/:id`
+- `PATCH /api/tutor/tuitions/:id/toggle` - Active / Closed
+- `GET /api/tutor/applicants`, `PATCH /api/tutor/applicants/:id` - accept or reject
+
+## Admin API (JWT + admin role)
+- `GET /api/admin/stats`
+- `GET /api/admin/users`, `PATCH /api/admin/users/:id/role`
+- `GET /api/admin/tuitions`, `PATCH /api/admin/tuitions/:id/status`
+- `GET /api/admin/transactions`
