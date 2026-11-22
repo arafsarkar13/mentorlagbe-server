@@ -24,7 +24,11 @@ Demo tutor: `tutor@mentorlagbe.com` / `Tutor@12345`. Demo student: `student@ment
 - Admin tools: platform stats, role management (admins cannot change their own role), tuition approval, transactions
 - Stripe Checkout, success-page verification and a **signed webhook** that upgrades the user to Pro and saves the payment once
 - ImgBB image upload with the API key kept on the server
-- Seed script for demo users, tuitions, applications and payments
+- Seed script for demo users, tuitions, applications, reviews and payments
+- Live home highlights (newest tuition, Pro tutors, platform numbers)
+- One-time role choice for new Google users (never admin)
+- Saved tuitions (stored inside the user record) and reviews (stored inside the tuition), so the database stays at 4 collections
+- Priority booking: applications from Pro students are flagged and shown first to tutors
 
 ## NPM Packages Used
 - `cors`
@@ -80,6 +84,12 @@ Running it again keeps existing data. To rebuild everything: `npm run seed -- --
 - `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/:id/role`
 - `GET /api/admin/tuitions`, `PATCH /api/admin/tuitions/:id/status`
 - `GET /api/admin/transactions`
+
+**Extras**
+- `GET /api/home/highlights` - live hero card data (public)
+- `PATCH /api/users/me/role` (JWT) - new Google user picks student or tutor once
+- `GET /api/saved`, `GET /api/saved/ids`, `POST|DELETE /api/saved/:id` (JWT + student)
+- `GET /api/reviews/can/:tuitionId`, `POST /api/reviews` (JWT + student with an accepted application)
 
 **Payments and uploads**
 - `POST /api/payments/checkout` (JWT) - start Stripe Checkout

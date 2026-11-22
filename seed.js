@@ -93,7 +93,7 @@ async function main() {
     }
     await usersCol.updateOne(
       { email: user.email },
-      { $set: { role: user.role, plan: user.plan || "free", bio: user.bio } }
+      { $set: { role: user.role, plan: user.plan || "free", bio: user.bio, roleChosen: true } }
     );
   }
 
@@ -157,6 +157,26 @@ async function main() {
     await applicationsCol.insertMany(applicationDocs);
     console.log(`Inserted ${applicationDocs.length} applications`);
   }
+
+  // 3b. Sample reviews from students whose applications were accepted
+  const reviewRows = [
+    ["HSC Higher Math Crash Batch", "student@mentorlagbe.com", 5, "Clear explanations and weekly model tests. My calculus improved a lot in one month."],
+    ["Spoken English Confidence Course", "student2@mentorlagbe.com", 4, "Friendly small group. I speak much more confidently in class now."],
+  ];
+  for (const [title, email, rating, comment] of reviewRows) {
+    const student = users.find((u) => u.email === email);
+    await tuitionsCol.updateOne(
+      { title, seeded: true },
+      {
+        $set: {
+          reviews: [{ studentEmail: email, studentName: student.name, rating, comment, createdAt: new Date() }],
+          ratingCount: 1,
+          ratingAvg: rating,
+        },
+      }
+    );
+  }
+  console.log("Added sample reviews");
 
   // 4. Sample payments for the two Pro demo users (real ones come from Stripe)
   const paymentsCol = db.collection("payments");

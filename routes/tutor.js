@@ -204,7 +204,7 @@ router.get("/applicants", async (req, res) => {
     const applicants = await db
       .collection("applications")
       .find({ tutorEmail: req.dbUser.email })
-      .sort({ appliedAt: -1 })
+      .sort({ priority: -1, appliedAt: -1 }) // Pro students first
       .toArray();
     res.json({ applicants });
   } catch (error) {

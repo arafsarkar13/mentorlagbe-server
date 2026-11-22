@@ -9,6 +9,10 @@ const uploadRoutes = require("./routes/upload");
 const tutorRoutes = require("./routes/tutor");
 const adminRoutes = require("./routes/admin");
 const payments = require("./routes/payments");
+const homeRoutes = require("./routes/home");
+const usersRoutes = require("./routes/users");
+const savedRoutes = require("./routes/saved");
+const reviewRoutes = require("./routes/reviews");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -48,6 +52,10 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/tutor", tutorRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payments", payments.router);
+app.use("/api/home", homeRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/saved", savedRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Returns the logged-in user from the JWT (used to test authentication)
 app.get("/api/me", verifyToken, (req, res) => {

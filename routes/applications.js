@@ -54,6 +54,7 @@ router.post("/", verifyToken, verifyStudent, async (req, res) => {
       preferredSchedule: preferredSchedule.trim(),
       studentNote: (studentNote || "").trim(),
       status: "pending",
+      priority: req.dbUser.plan === "pro", // Pro students get priority booking
       appliedAt: new Date(),
     });
 
